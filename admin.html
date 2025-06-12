@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>لوحة تحكم ChatDZ - عرض الرسائل والمستخدمين</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      direction: rtl;
+      background-color: #f4f4f4;
+      padding: 20px;
+    }
+    h1, h2 {
+      text-align: center;
+      color: #333;
+    }
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+    }
+    .stats div {
+      background-color: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 30%;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+      background-color: #fff;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #eee;
+    }
+    /* تمييز الرسائل حسب المرسل */
+    .user-msg {
+      background-color: #d0f0fd;
+    }
+    .bot-msg {
+      background-color: #f0d0d0;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>لوحة تحكم ChatDZ</h1>
+
+  <div class="stats">
+    <div><strong>عدد الزوار:</strong> <span id="visitorCount">0</span></div>
+    <div><strong>عدد المتصلين:</strong> <span id="onlineCount">0</span></div>
+    <div><strong>عدد الرسائل:</strong> <span id="messageCount">0</span></div>
+  </div>
+
+  <h2>📨 الرسائل بين المستخدم والبوت</h2>
+  <table>
+    <thead>
+      <tr><th>المرسل</th><th>النص</th><th>الوقت</th></tr>
+    </thead>
+    <tbody id="messagesTable"></tbody>
+  </table>
+
+  <h2>🌍 الزوار</h2>
+  <table>
+    <thead>
+      <tr><th>البلد</th><th>المدينة</th><th>الجهاز</th><th>الوقت</th></tr>
+    </thead>
+    <tbody id="visitsTable"></tbody>
+  </table>
+
+  <h2>🟢 المتصلين الآن</h2>
+  <table>
+    <thead>
+      <tr><th>IP</th><th>وقت الاتصال</th></tr>
+    </thead>
+    <tbody id="onlineTable"></tbody>
+  </table>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      set,
+      push,
+      onValue,
+      onDisconnect
+    } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCKYogae4zNyUB5BlDBPF2F-5HuXJijs0U",
+      authDomain: "chatdz-106bd.firebaseapp.com",
+      databaseURL: "https://chatdz-106bd-default-rtdb.firebaseio.com",
+      projectId: "chatdz-106bd",
+      storageBucket: "chatdz-106bd.appspot.com",
+      messagingSenderId: "965553218415",
+      appId: "1:965553218415:web:1cee50095bb2465c38be9a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // توليد معرف فريد للزائر وتخزينه
+    const visitorId = localStorage.getItem("chatdz_visitor_id") || crypto.randomUUID();
+    localStorage.setItem("chatdz_visitor_id", visitorId);
+
+    const device = /Mobi|Android/i.test(navigator.userAgent) ? "موبايل" : "حاسوب";
+
+    // جلب بيانات IP وبلد ومدينة
+    async function fetchVisitorInfo() {
+      try {
+        const res = await fetch("https://ipapi.co/json/");
+        if (!res.ok) throw new Error("فشل في جلب بيانات IP");
+        const data = await res.json();
+        return {
+          country: data.country_name || "غير معروف",
+          city: data.city || "غير معروف",
+          ip: data.ip || "غير معروف"
+        };
+      } catch {
+        return { country: "غير معروف", city: "غير معروف", ip: "غير معروف" };
+      }
+    }
+
+    // تسجيل الزائر والمتصل
+    async function registerVisitor() {
+      const info = await fetchVisitorInfo();
+      // سجل الزائر
+      set(ref(db, "visits/" + visitorId), {
+        country: info.country,
+        city: info.city,
+        device,
+        time: Date.now()
+      });
+      // سجل المتصل
+      const onlineRef = ref(db, "onlineUsers/" + visitorId);
+      set(onlineRef, {
+        ip: info.ip,
+        connectedAt: Date.now()
+      });
+      onDisconnect(onlineRef).remove();
+    }
+
+    registerVisitor();
+
+    function formatTime(timestamp) {
+      const date = new Date(timestamp);
+      return date.toLocaleString("ar-DZ");
+    }
+
+    // تحديث عرض الرسائل مع تمييز حسب المرسل
+    onValue(ref(db, "messages/chat_1"), snapshot => {
+      const data = snapshot.val();
+      const tbody = document.getElementById("messagesTable");
+      tbody.innerHTML = "";
+      let count = 0;
+      if (data) {
+        for (const key in data) {
+          const msg = data[key];
+          count++;
+          // صنف الرسالة حسب المرسل
+          let cls = "";
+          if (msg.sender?.toLowerCase() === "user") cls = "user-msg";
+          else if (msg.sender?.toLowerCase() === "bot") cls = "bot-msg";
+
+          tbody.innerHTML += `<tr class="${cls}">
+            <td>${msg.sender || "غير معروف"}</td>
+            <td>${msg.text || ""}</td>
+            <td>${formatTime(msg.time)}</td>
+          </tr>`;
+        }
+      }
+      document.getElementById("messageCount").textContent = count;
+    });
+
+    // تحديث عرض الزوار مع التأكد من عدم ظهور undefined
+    onValue(ref(db, "visits"), snapshot => {
+      const data = snapshot.val();
+      const tbody = document.getElementById("visitsTable");
+      tbody.innerHTML = "";
+      let count = 0;
+      if (data) {
+        for (const key in data) {
+          const visit = data[key];
+          count++;
+          tbody.innerHTML += `<tr>
+            <td>${visit.country || "غير معروف"}</td>
+            <td>${visit.city || "غير معروف"}</td>
+            <td>${visit.device || "غير معروف"}</td>
+            <td>${formatTime(visit.time)}</td>
+          </tr>`;
+        }
+      }
+      document.getElementById("visitorCount").textContent = count;
+    });
+
+    // تحديث عرض المتصلين الآن
+    onValue(ref(db, "onlineUsers"), snapshot => {
+      const data = snapshot.val();
+      const tbody = document.getElementById("onlineTable");
+      tbody.innerHTML = "";
+      let count = 0;
+      if (data) {
+        for (const key in data) {
+          const user = data[key];
+          count++;
+          tbody.innerHTML += `<tr>
+            <td>${user.ip || "غير معروف"}</td>
+            <td>${formatTime(user.connectedAt)}</td>
+          </tr>`;
+        }
+      }
+      document.getElementById("onlineCount").textContent = count;
+    });
+
+  </script>
+</body>
+</html>

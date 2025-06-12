@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <title>تهيئة قاعدة بيانات Firebase</title>
+</head>
+<body>
+  <h1>تهيئة بيانات Firebase Realtime Database</h1>
+  <button id="initBtn">ضبط البيانات الآن</button>
+  <pre id="status"></pre>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCKYogae4zNyUB5BlDBPF2F-5HuXJijs0U",
+      authDomain: "chatdz-106bd.firebaseapp.com",
+      databaseURL: "https://chatdz-106bd-default-rtdb.firebaseio.com",
+      projectId: "chatdz-106bd",
+      storageBucket: "chatdz-106bd.appspot.com",
+      messagingSenderId: "965553218415",
+      appId: "1:965553218415:web:1cee50095bb2465c38be9a",
+      measurementId: "G-KJWZFMY5ZK"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const statusEl = document.getElementById("status");
+    const initBtn = document.getElementById("initBtn");
+
+    initBtn.addEventListener("click", async () => {
+      statusEl.textContent = "جاري ضبط البيانات...";
+
+      try {
+        await set(ref(db), {
+          messages: {
+            chat_1: {
+              msg1: {
+                sender: "Admin",
+                text: "مرحباً بكم في ChatDZ!",
+                time: Date.now()
+              }
+            }
+          },
+          visits: {
+            visit_1: {
+              country: "DZ",
+              city: "Algiers",
+              device: "Mobile",
+              time: Date.now()
+            }
+          },
+          onlineUsers: {
+            user_1: {
+              ip: "192.168.0.1",
+              connectedAt: Date.now()
+            }
+          }
+        });
+
+        statusEl.textContent = "✅ تم ضبط البيانات بنجاح في قاعدة Firebase Realtime Database.";
+      } catch (error) {
+        statusEl.textContent = "❌ حدث خطأ أثناء ضبط البيانات:\n" + error;
+      }
+    });
+  </script>
+</body>
+</html>

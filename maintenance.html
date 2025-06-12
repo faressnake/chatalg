@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" href="download.png" type="image/png">
+  <link rel="shortcut icon" href="download.png" type="image/png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🔧 الموقع في صيانة</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;800&display=swap" rel="stylesheet" />
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      color: #fff;
+      font-family: 'Cairo', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+      padding: 20px;
+    }
+
+    h1 {
+      font-size: 40px;
+      margin-bottom: 20px;
+      animation: pulse 1.5s infinite;
+    }
+
+    p {
+      font-size: 20px;
+      margin-bottom: 30px;
+      color: #ddd;
+    }
+
+    .loader {
+      border: 6px solid #444;
+      border-top: 6px solid #00ffcc;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      animation: spin 1s linear infinite;
+      margin-top: 15px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    footer {
+      position: absolute;
+      bottom: 15px;
+      font-size: 14px;
+      color: #aaa;
+    }
+
+    footer a {
+      color: #00ffcc;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔧 رانا فـ صيانة شوية برك!</h1>
+  <p>🔄 الموقع راهو يتحسن باش يخدمكم خير، ارجع بعد شوية يا غالي ❤️</p>
+    <p id="rotating-message" style="font-size: 20px; color: #00ffcc; margin-top: 30px; height: 30px;"></p>
+  <div class="loader"></div>
+  <footer>
+    🚀 تصميم وبرمجة <a href="https://www.instagram.com/sxnaxke/" target="_blank">FaresDj</a>
+  </footer>
+  <script>
+  const messages = [
+    "✨ رانا نخدمو باش نرجعو الموقع خير من قبل إن شاء الله.",
+    "💡 فارس راهو يخدم ليل ونهار باش يفرحكم بالتحديثات.",
+    "🛠️ شوية صبر يا غالي، كلشي راهو يتجهز.",
+    "📢 الموقع في صيانة بسيطة، وراح يرجع أقوى.",
+    "❤️ نشكروكم على صبركم وثقتكم الغالية.",
+    "🔧 التطوير راهو جاري... كونوا مستعدين للجديد!",
+    "🚀 مفاجآت مميزة جاية قريب، خليكم معانا.",
+    "🌙 كل تأخيرة فيها خيرة... وربي يبارك في صبركم.",
+    "🔥 الموقع يتجدد من جديد، ترقبوا الأفضل.",
+    "✅ فارس ديما يخدمكم من قلبو، شكراً للدعم.",
+    "🌟 قريباً... تجربة ولا أروع تنتظركم بإذن الله."
+  ];
+
+  const msgEl = document.getElementById("rotating-message");
+  let msgIndex = 0;
+  let charIndex = 0;
+  let isDeleting = false;
+
+  function typeEffect() {
+    const current = messages[msgIndex];
+    if (isDeleting) {
+      charIndex--;
+      msgEl.textContent = current.substring(0, charIndex);
+      if (charIndex === 0) {
+        isDeleting = false;
+        msgIndex = (msgIndex + 1) % messages.length;
+      }
+    } else {
+      charIndex++;
+      msgEl.textContent = current.substring(0, charIndex);
+      if (charIndex === current.length) {
+        isDeleting = true;
+        setTimeout(typeEffect, 2000); // wait before deleting
+        return;
+      }
+    }
+    setTimeout(typeEffect, isDeleting ? 30 : 60); // typing and deleting speed
+  }
+
+  typeEffect();
+</script>
+
+</body>
+</html>
